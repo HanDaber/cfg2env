@@ -1,0 +1,14 @@
+# Empty document
+---
+
+# Null values
+key: null
+other: ~
+
+# Boolean values
+true_val: true
+false_val: false
+
+# Numeric values
+integer: 42
+float: 3.14 

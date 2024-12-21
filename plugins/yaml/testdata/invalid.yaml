@@ -1,0 +1,10 @@
+database:
+  host: localhost
+  port: 5432
+  credentials:
+    username: admin
+    password: "unclosed string
+  invalid:
+    - [broken array
+api:
+  features: [1, 2, 3 

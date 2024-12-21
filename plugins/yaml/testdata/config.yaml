@@ -1,0 +1,14 @@
+database:
+  host: localhost
+  port: 5432
+  credentials:
+    username: admin
+    password: "secret with spaces"
+
+api:
+  url: "https://api.example.com"
+  timeout: 30
+  features:
+    - logging
+    - metrics
+    - tracing 

@@ -1,0 +1,15 @@
+{
+  "empty_object": {},
+  "null_values": {
+    "key": null,
+    "other": null
+  },
+  "boolean_values": {
+    "true_val": true,
+    "false_val": false
+  },
+  "numeric_values": {
+    "integer": 42,
+    "float": 3.14
+  }
+} 
