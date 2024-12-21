@@ -140,6 +140,6 @@ func (p *Plugin) Parse(r io.Reader) (map[string]string, error) {
 
 ---
 
-MIT License • Built with ❤️ using Go
+MIT License • Built with 🍑 using Go
 
 </div> 
