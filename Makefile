@@ -8,6 +8,9 @@ build:
 test:
 	go test -v ./...
 
+install:
+	./install.sh --local
+
 test-cover:
 	go test -v -cover ./...
 
