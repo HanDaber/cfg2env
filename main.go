@@ -40,6 +40,7 @@ func main() {
 
 	// Create converter with plugin
 	c := converter.New(p)
+	c.SetVersion(version)
 
 	// Convert stdin to stdout
 	if err := c.Convert(os.Stdin, os.Stdout); err != nil {
