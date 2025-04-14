@@ -27,6 +27,7 @@ Built-in plugins handle common configuration formats:
 - Preserves array indices
 - Type-safe conversions
 - Clean `.env` output
+- Customizable underscore handling with `--dunder` parameter
 
 ## 🚀 Quick Start
 
@@ -38,6 +39,10 @@ go install github.com/handaber/cfg2env@latest
 cat config.yaml | cfg2env > .env
 cat config.json | cfg2env --format json > .env
 cat config.db | cfg2env --format sqlite > .env
+
+# Control underscore handling
+cat config.yaml | cfg2env --dunder 1 > .env  # Remove 1 underscore from consecutive sequences
+cat config.yaml | cfg2env --dunder 3 > .env  # Remove 3 underscores from consecutive sequences
 ```
 
 ## 📋 Examples
@@ -110,6 +115,34 @@ DATABASE_PORT=5432
 ```
 </details>
 
+<details>
+<summary><b>Dunder Examples</b></summary>
+
+With `--dunder 1`:
+```env
+# Input: example_key
+EXAMPLEKEY=value
+
+# Input: example__key
+EXAMPLE_KEY=value
+
+# Input: example____key
+EXAMPLE___KEY=value
+```
+
+With `--dunder 3`:
+```env
+# Input: example_key
+EXAMPLEKEY=value
+
+# Input: example__key
+EXAMPLEKEY=value
+
+# Input: example____key
+EXAMPLE_KEY=value
+```
+</details>
+
 ## 🛠️ Development
 
 ```bash
@@ -140,6 +173,6 @@ func (p *Plugin) Parse(r io.Reader) (map[string]string, error) {
 
 ---
 
-MIT License • Built with 🍑 using Go
+MIT License • Built with �� using Go
 
 </div> 

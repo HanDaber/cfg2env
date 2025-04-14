@@ -14,6 +14,7 @@ var (
 	format  = flag.String("format", "", "Input format (yaml, json, sqlite)")
 	query   = flag.String("query", "", "Custom query for SQLite format")
 	showVer = flag.Bool("version", false, "Show version information")
+	dunder  = flag.Int("dunder", 0, "Number of underscores to remove from consecutive sequences (default: 0, negative values treated as 0)")
 )
 
 func main() {
@@ -41,6 +42,9 @@ func main() {
 	// Create converter with plugin
 	c := converter.New(p)
 	c.SetVersion(version)
+	if *dunder > 0 {
+		c.SetDunder(*dunder)
+	}
 
 	// Convert stdin to stdout
 	if err := c.Convert(os.Stdin, os.Stdout); err != nil {

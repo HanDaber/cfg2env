@@ -13,6 +13,7 @@ import (
 type Converter struct {
 	plugin  plugin.Plugin
 	version string
+	dunder  int
 }
 
 // New creates a new Converter with the given plugin
@@ -20,12 +21,56 @@ func New(p plugin.Plugin) *Converter {
 	return &Converter{
 		plugin:  p,
 		version: "dev", // This will be overridden by the version from main
+		dunder:  0,
 	}
 }
 
 // SetVersion sets the version string for the converter
 func (c *Converter) SetVersion(version string) {
 	c.version = version
+}
+
+// SetDunder sets the number of underscores to remove from consecutive sequences
+func (c *Converter) SetDunder(n int) {
+	if n > 0 {
+		c.dunder = n
+	}
+}
+
+// processKey processes the key according to dunder rules
+func (c *Converter) processKey(key string) string {
+	if c.dunder == 0 {
+		return key
+	}
+
+	var result strings.Builder
+	underscoreCount := 0
+
+	for _, char := range key {
+		if char == '_' {
+			underscoreCount++
+		} else {
+			if underscoreCount > 0 {
+				// If we have consecutive underscores, remove up to dunder count
+				remaining := underscoreCount - c.dunder
+				if remaining > 0 {
+					result.WriteString(strings.Repeat("_", remaining))
+				}
+				underscoreCount = 0
+			}
+			result.WriteRune(char)
+		}
+	}
+
+	// Handle trailing underscores
+	if underscoreCount > 0 {
+		remaining := underscoreCount - c.dunder
+		if remaining > 0 {
+			result.WriteString(strings.Repeat("_", remaining))
+		}
+	}
+
+	return result.String()
 }
 
 func (c *Converter) writeHeader(w io.Writer) error {
@@ -70,7 +115,8 @@ func (c *Converter) Convert(r io.Reader, w io.Writer) error {
 	normalized := make(map[string]string)
 	for k, v := range env {
 		upperKey := strings.ToUpper(k)
-		normalized[upperKey] = v
+		processedKey := c.processKey(upperKey)
+		normalized[processedKey] = v
 	}
 
 	// Get sorted keys for consistent output
