@@ -1,5 +1,8 @@
 bin
 
+example/cfg2env-demo/*key*
+example/cfg2env-demo/*.yaml
+
 .*
 !.git
 !.gitignore
