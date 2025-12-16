@@ -29,12 +29,36 @@ Built-in plugins handle common configuration formats:
 - Clean `.env` output
 - Customizable underscore handling with `--dunder` parameter
 
+## 🚀 Installation
+
+### Quick Install (Recommended)
+
+```bash
+# Install latest version
+curl -fsSL https://raw.githubusercontent.com/HanDaber/cfg2env/main/install.sh | sh
+
+# Install specific version
+curl -fsSL https://raw.githubusercontent.com/HanDaber/cfg2env/main/install.sh | VERSION=v0.1.0 sh
+
+# Custom install directory
+curl -fsSL https://raw.githubusercontent.com/HanDaber/cfg2env/main/install.sh | INSTALL_DIR=~/bin sh
+```
+
+### Alternative Methods
+
+```bash
+# Via Go
+go install github.com/handaber/cfg2env@latest
+
+# From source
+git clone https://github.com/HanDaber/cfg2env.git
+cd cfg2env
+./install.sh --local
+```
+
 ## 🚀 Quick Start
 
 ```bash
-# Install
-go install github.com/handaber/cfg2env@latest
-
 # Use with any supported format
 cat config.yaml | cfg2env > .env
 cat config.json | cfg2env --format json > .env

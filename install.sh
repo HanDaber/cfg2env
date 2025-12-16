@@ -75,11 +75,14 @@ detect_platform() {
     case "$ARCH" in
         x86_64|amd64) ARCH="amd64" ;;
         aarch64|arm64) ARCH="arm64" ;;
+        armv7l|armv6l) ARCH="arm" ;;
+        i386|i686) ARCH="386" ;;
         *) error "Unsupported architecture: $ARCH" ;;
     esac
     
     case "$OS" in
-        linux|darwin) ;;
+        linux|darwin|freebsd|openbsd|netbsd) ;;
+        mingw*|msys*|cygwin*) OS="windows" ;;
         *) error "Unsupported operating system: $OS" ;;
     esac
 }
