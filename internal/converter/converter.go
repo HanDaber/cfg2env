@@ -111,12 +111,57 @@ func (c *Converter) Convert(r io.Reader, w io.Writer) error {
 		return fmt.Errorf("parsing error: %w", err)
 	}
 
-	// Convert all keys to uppercase and merge duplicate keys
+	// Convert all keys to uppercase and detect duplicates
 	normalized := make(map[string]string)
-	for k, v := range env {
+	keyMapping := make(map[string][]string) // maps uppercase key to original keys
+
+	for k := range env {
 		upperKey := strings.ToUpper(k)
 		processedKey := c.processKey(upperKey)
-		normalized[processedKey] = v
+		keyMapping[processedKey] = append(keyMapping[processedKey], k)
+	}
+
+	// Check for duplicates
+	var exactDuplicates []string
+	var caseInsensitiveDuplicates []string
+
+	for upperKey, originalKeys := range keyMapping {
+		if len(originalKeys) > 1 {
+			// Check if it's an exact duplicate or case-insensitive duplicate
+			allSame := true
+			for i := 1; i < len(originalKeys); i++ {
+				if originalKeys[i] != originalKeys[0] {
+					allSame = false
+					break
+				}
+			}
+
+			if allSame {
+				exactDuplicates = append(exactDuplicates, fmt.Sprintf("duplicate key '%s'", originalKeys[0]))
+			} else {
+				// Sort for consistent error messages
+				sortedKeys := make([]string, len(originalKeys))
+				copy(sortedKeys, originalKeys)
+				sort.Strings(sortedKeys)
+				caseInsensitiveDuplicates = append(caseInsensitiveDuplicates,
+					fmt.Sprintf("duplicate key '%s' (found as '%s')", upperKey, strings.Join(sortedKeys, "' and '")))
+			}
+		} else {
+			// No duplicate, add to normalized map
+			normalized[upperKey] = env[originalKeys[0]]
+		}
+	}
+
+	// Report all duplicates if any found
+	if len(exactDuplicates) > 0 || len(caseInsensitiveDuplicates) > 0 {
+		var errMsg strings.Builder
+		errMsg.WriteString("duplicate keys found: ")
+
+		allErrors := append(exactDuplicates, caseInsensitiveDuplicates...)
+		sort.Strings(allErrors)
+		errMsg.WriteString(strings.Join(allErrors, "; "))
+
+		return fmt.Errorf(errMsg.String())
 	}
 
 	// Get sorted keys for consistent output

@@ -6,7 +6,7 @@ build:
 	go build -o bin/cfg2env
 
 test:
-	go test -v ./...
+	go test -v -race -shuffle=on -count=5 ./...
 
 install:
 	./install.sh --local
