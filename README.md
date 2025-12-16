@@ -167,6 +167,22 @@ EXAMPLE_KEY=value
 ```
 </details>
 
+## 💡 Use Cases
+
+```bash
+# Decrypt sops-encrypted configs
+sops -d secrets.yaml | cfg2env > .env
+
+# Extract Kubernetes ConfigMap data
+kubectl get configmap my-config -o json | jq .data | cfg2env --format json > .env
+
+# Convert Terraform outputs
+terraform output -json | cfg2env --format json > .env
+
+# Process remote configs
+curl -s https://api.example.com/config | cfg2env --format json > .env
+```
+
 ## 🛠️ Development
 
 ```bash
