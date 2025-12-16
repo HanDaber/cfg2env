@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 	"os"
@@ -9,12 +10,16 @@ import (
 	"github.com/handaber/cfg2env/plugins"
 )
 
+//go:embed README.md
+var readme string
+
 var (
 	version = "dev"
 	format  = flag.String("format", "", "Input format (yaml, json, sqlite)")
 	query   = flag.String("query", "", "Custom query for SQLite format")
 	showVer = flag.Bool("version", false, "Show version information")
 	help    = flag.Bool("help", false, "Show help information")
+	docs    = flag.Bool("docs", false, "Show documentation")
 	dunder  = flag.Int("dunder", 0, "Number of underscores to remove from consecutive sequences (default: 0, negative values treated as 0)")
 )
 
@@ -78,6 +83,11 @@ func main() {
 
 	if *showVer {
 		fmt.Printf("cfg2env version %s\n", version)
+		os.Exit(0)
+	}
+
+	if *docs {
+		fmt.Print(readme)
 		os.Exit(0)
 	}
 
