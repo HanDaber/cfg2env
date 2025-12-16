@@ -1,4 +1,4 @@
-.PHONY: all build test clean example example-yaml example-json example-sqlite
+.PHONY: all build test clean example example-yaml example-json example-sqlite demo-error
 
 all: build test example
 
@@ -45,3 +45,6 @@ example-sqlite:
 	@echo "\nOutput (.env):"
 	@cat plugins/sqlite/testdata/config.db | ./bin/cfg2env --format sqlite
 	@rm -f plugins/sqlite/testdata/config.db
+
+demo-error:
+	@go run example/errors.go || true
