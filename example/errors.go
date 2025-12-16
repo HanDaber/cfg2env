@@ -25,23 +25,28 @@ func (p *demoPlugin) Parse(r io.Reader) (map[string]string, error) {
 }
 
 func main() {
-	fmt.Println("=== Demonstrating Duplicate Key Error Detection ===\n")
+	fmt.Println("=== Demonstrating Duplicate Key Error Detection ===")
+	fmt.Println()
 	fmt.Println("Plugin returns map with case-variant keys:")
 	fmt.Println("  API_KEY: secret-from-uppercase")
 	fmt.Println("  api_key: secret-from-lowercase")
 	fmt.Println("  DATABASE_URL: postgres://localhost/db")
 	fmt.Println("  Server_Port: 8080")
-	fmt.Println("\nAttempting conversion...\n")
+	fmt.Println()
+	fmt.Println("Attempting conversion...")
+	fmt.Println()
 
 	p := &demoPlugin{BasePlugin: plugin.NewBasePlugin("demo")}
 	c := converter.New(p)
 
 	err := c.Convert(strings.NewReader(""), os.Stdout)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "\n❌ Error: %v\n", err)
+		fmt.Fprintln(os.Stderr)
+		fmt.Fprintf(os.Stderr, "❌ Error: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Println("\n✅ Conversion successful!")
+	fmt.Println()
+	fmt.Println("✅ Conversion successful!")
 }
 
