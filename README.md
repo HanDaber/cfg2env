@@ -14,8 +14,10 @@
 ## 💡 Use Cases
 
 ```bash
-# Decrypt sops-encrypted configs
+# Decrypt sops gpg-encrypted configs
 sops -d secrets.yaml | cfg2env > .env
+# or age-encrypted
+SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt sops -d secrets.yaml | cfg2env > .env
 
 # Extract Kubernetes ConfigMap data
 kubectl get configmap my-config -o json | jq .data | cfg2env --format json > .env
