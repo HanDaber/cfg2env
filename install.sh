@@ -4,11 +4,10 @@ set -e  # Exit on error
 
 # Configuration
 BINARY="cfg2env"
-VERSION="latest"
-GITHUB_REPO="handaber/cfg2env"
-# Default to user's local bin if XDG_BIN_HOME or HOME is set, fallback to /usr/local/bin
-INSTALL_DIR="${XDG_BIN_HOME:-${HOME}/.local/bin}"
-INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
+VERSION="${VERSION:-latest}"
+GITHUB_REPO="HanDaber/cfg2env"
+INSTALL_DIR="${INSTALL_DIR:-${XDG_BIN_HOME:-${HOME}/.local/bin}}"
+VERIFY_CHECKSUM="${VERIFY_CHECKSUM:-1}"
 LOCAL_INSTALL=false
 
 # Colors
@@ -47,8 +46,18 @@ parse_args() {
                 printf "  --local    Install from local source code instead of downloading release\n"
                 printf "  --help     Show this help message\n"
                 printf "\nEnvironment variables:\n"
-                printf "  INSTALL_DIR    Installation directory (default: \$XDG_BIN_HOME or \$HOME/.local/bin)\n"
-                printf "  VERSION        Version to install (default: latest)\n"
+                printf "  INSTALL_DIR       Installation directory (default: \$XDG_BIN_HOME or \$HOME/.local/bin)\n"
+                printf "  VERSION           Version to install (default: latest, format: v0.1.0 or 0.1.0)\n"
+                printf "  VERIFY_CHECKSUM   Verify checksums (default: 1, set to 0 to skip)\n"
+                printf "\nExamples:\n"
+                printf "  # Install latest version\n"
+                printf "  curl -fsSL https://raw.githubusercontent.com/HanDaber/cfg2env/main/install.sh | sh\n"
+                printf "\n  # Install specific version\n"
+                printf "  curl -fsSL https://raw.githubusercontent.com/HanDaber/cfg2env/main/install.sh | VERSION=v0.1.0 sh\n"
+                printf "\n  # Install without checksum verification (not recommended)\n"
+                printf "  curl -fsSL https://raw.githubusercontent.com/HanDaber/cfg2env/main/install.sh | VERIFY_CHECKSUM=0 sh\n"
+                printf "\n  # Build from local source\n"
+                printf "  ./install.sh --local\n"
                 exit 0
                 ;;
             *)
@@ -91,6 +100,17 @@ check_dependencies() {
                 error "$cmd is required but not installed"
             fi
         done
+        
+        # Check for checksum tool if verification is enabled
+        if [ "$VERIFY_CHECKSUM" = "1" ]; then
+            if command -v sha256sum >/dev/null 2>&1; then
+                CHECKSUM_CMD="sha256sum"
+            elif command -v shasum >/dev/null 2>&1; then
+                CHECKSUM_CMD="shasum -a 256"
+            else
+                error "Checksum verification enabled but neither sha256sum nor shasum found. Install one or set VERIFY_CHECKSUM=0"
+            fi
+        fi
     fi
 }
 
@@ -159,17 +179,84 @@ build_local() {
     chmod +x "$INSTALL_DIR/$BINARY" || error "Failed to make binary executable"
 }
 
+# Normalize version format (add 'v' prefix if missing)
+normalize_version() {
+    if [ "$VERSION" = "latest" ]; then
+        step "Fetching latest release version..."
+        VERSION=$(curl -fsSL "https://api.github.com/repos/$GITHUB_REPO/releases/latest" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
+        if [ -z "$VERSION" ]; then
+            error "Failed to fetch latest version"
+        fi
+        step "Latest version: $VERSION"
+    else
+        # Ensure version has 'v' prefix
+        case "$VERSION" in
+            v*) ;;
+            *) VERSION="v$VERSION" ;;
+        esac
+    fi
+}
+
+# Verify checksum
+verify_checksum() {
+    if [ "$VERIFY_CHECKSUM" != "1" ]; then
+        printf "${BLUE}Note: ${NC}Checksum verification skipped (VERIFY_CHECKSUM=0)\n"
+        return 0
+    fi
+    
+    step "Verifying checksum..."
+    
+    CHECKSUM_URL="https://github.com/$GITHUB_REPO/releases/download/$VERSION/${BINARY}_${VERSION#v}_checksums.txt"
+    CHECKSUM_FILE="$TMP_DIR/checksums.txt"
+    ARCHIVE_NAME="${BINARY}_${VERSION#v}_${OS}_${ARCH}.tar.gz"
+    
+    # Download checksums file
+    if ! curl -fsSL "$CHECKSUM_URL" -o "$CHECKSUM_FILE"; then
+        error "Failed to download checksums file from $CHECKSUM_URL"
+    fi
+    
+    # Extract expected checksum for our archive
+    EXPECTED_CHECKSUM=$(grep "$ARCHIVE_NAME" "$CHECKSUM_FILE" | awk '{print $1}')
+    if [ -z "$EXPECTED_CHECKSUM" ]; then
+        error "Checksum for $ARCHIVE_NAME not found in checksums file"
+    fi
+    
+    # Calculate actual checksum
+    cd "$TMP_DIR"
+    ACTUAL_CHECKSUM=$($CHECKSUM_CMD "$ARCHIVE_NAME" | awk '{print $1}')
+    
+    # Compare checksums
+    if [ "$EXPECTED_CHECKSUM" != "$ACTUAL_CHECKSUM" ]; then
+        error "Checksum verification failed!\nExpected: $EXPECTED_CHECKSUM\nActual:   $ACTUAL_CHECKSUM"
+    fi
+    
+    success "Checksum verified"
+}
+
 # Download and install binary
 install_binary() {
     step "Installing $BINARY..."
     
-    # Download URL
-    DOWNLOAD_URL="https://github.com/$GITHUB_REPO/releases/download/$VERSION/${BINARY}_${VERSION}_${OS}_${ARCH}.tar.gz"
+    # Normalize version format
+    normalize_version
     
-    # Download and extract
+    # Build download URL (note: version in URL doesn't have 'v' prefix)
+    ARCHIVE_NAME="${BINARY}_${VERSION#v}_${OS}_${ARCH}.tar.gz"
+    DOWNLOAD_URL="https://github.com/$GITHUB_REPO/releases/download/$VERSION/$ARCHIVE_NAME"
+    
+    # Download archive
     step "Downloading from $DOWNLOAD_URL..."
-    if ! curl -sL "$DOWNLOAD_URL" | tar xz -C "$TMP_DIR"; then
-        error "Failed to download and extract $BINARY"
+    if ! curl -fsSL "$DOWNLOAD_URL" -o "$TMP_DIR/$ARCHIVE_NAME"; then
+        error "Failed to download $BINARY from $DOWNLOAD_URL"
+    fi
+    
+    # Verify checksum
+    verify_checksum
+    
+    # Extract archive
+    step "Extracting archive..."
+    if ! tar xzf "$TMP_DIR/$ARCHIVE_NAME" -C "$TMP_DIR"; then
+        error "Failed to extract archive"
     fi
     
     # Install binary
