@@ -14,6 +14,10 @@
 ## 💡 Use Cases
 
 ```bash
+# Filter configs for specific environments or services
+cat config.yaml | cfg2env --include "PROD_*" --exclude "*_PASSWORD,*_SECRET" > prod.env
+cat config.yaml | cfg2env --include "DATABASE_*,CACHE_*" > data-services.env
+
 # Decrypt sops gpg-encrypted configs
 sops -d secrets.yaml | cfg2env > .env
 # or age-encrypted
@@ -248,4 +252,4 @@ func (p *Plugin) Parse(r io.Reader) (map[string]string, error) {
 
 MIT License • Built with 🍑 using Go
 
-</div> 
+</div>

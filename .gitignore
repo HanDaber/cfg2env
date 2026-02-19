@@ -1,8 +1,12 @@
 bin
-
-example/cfg2env-demo/*key*
-example/cfg2env-demo/*.yaml
+cfg2env
 
 .*
 !.git
 !.gitignore
+
+*.env
+*.db
+
+example/encryption-demo/*-key*
+example/encryption-demo/*.yaml
