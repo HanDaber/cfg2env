@@ -1,0 +1,79 @@
+# Configuration organized by SERVICE_KEY with ENV as suffix
+# Pattern: SERVICE_KEY_ENV
+# Use case: Compare same setting across environments
+
+# Database hosts by environment
+database_host_dev: localhost
+database_host_staging: staging-db.internal
+database_host_prod: prod-db.example.com
+
+# Database ports by environment
+database_port_dev: 5432
+database_port_staging: 5432
+database_port_prod: 5432
+
+# Database credentials by environment
+database_username_dev: dev_user
+database_username_staging: staging_user
+database_username_prod: prod_user
+database_password_dev: dev_pass
+database_password_staging: staging_pass_secure
+database_password_prod: prod_pass_very_secure
+
+# Database connection limits
+database_max_connections_dev: 10
+database_max_connections_staging: 50
+database_max_connections_prod: 200
+
+# API hosts by environment
+api_host_dev: localhost
+api_host_staging: staging-api.internal
+api_host_prod: api.example.com
+
+# API ports by environment
+api_port_dev: 8080
+api_port_staging: 443
+api_port_prod: 443
+
+# API timeouts by environment
+api_timeout_dev: 30
+api_timeout_staging: 60
+api_timeout_prod: 90
+
+# API credentials by environment
+api_api_key_dev: dev_api_key_12345
+api_api_key_staging: staging_api_key_abc123
+api_api_key_prod: prod_api_key_secure_token
+api_secret_dev: dev_secret_67890
+api_secret_staging: staging_secret_xyz789
+api_secret_prod: prod_secret_secure_token
+
+# Cache hosts by environment
+cache_host_dev: localhost
+cache_host_staging: staging-cache.internal
+cache_host_prod: prod-cache.example.com
+
+# Cache ports by environment
+cache_port_dev: 6379
+cache_port_staging: 6379
+cache_port_prod: 6379
+
+# Cache TTL by environment
+cache_ttl_dev: 300
+cache_ttl_staging: 600
+cache_ttl_prod: 3600
+
+# Queue hosts by environment
+queue_host_dev: localhost
+queue_host_staging: staging-queue.internal
+queue_host_prod: prod-queue.example.com
+
+# Queue ports by environment
+queue_port_dev: 5672
+queue_port_staging: 5672
+queue_port_prod: 5672
+
+# Queue vhosts by environment
+queue_vhost_dev: dev
+queue_vhost_staging: staging
+queue_vhost_prod: prod

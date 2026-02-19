@@ -14,6 +14,7 @@ type Converter struct {
 	plugin  plugin.Plugin
 	version string
 	dunder  int
+	filter  *filter
 }
 
 // New creates a new Converter with the given plugin
@@ -162,6 +163,23 @@ func (c *Converter) Convert(r io.Reader, w io.Writer) error {
 		errMsg.WriteString(strings.Join(allErrors, "; "))
 
 		return fmt.Errorf(errMsg.String())
+	}
+
+	// Apply filter if configured
+	if c.filter != nil {
+		filtered := make(map[string]string)
+		for k, v := range normalized {
+			if c.filter.shouldInclude(k) {
+				filtered[k] = v
+			}
+		}
+		normalized = filtered
+
+		// Handle empty result
+		if len(normalized) == 0 {
+			_, err := io.WriteString(w, "# No keys matched the specified filters\n")
+			return err
+		}
 	}
 
 	// Get sorted keys for consistent output

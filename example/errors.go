@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/handaber/cfg2env/internal/converter"
+	"github.com/handaber/cfg2env/lib/converter"
 	"github.com/handaber/cfg2env/plugin"
 )
 
@@ -49,4 +49,3 @@ func main() {
 	fmt.Println()
 	fmt.Println("✅ Conversion successful!")
 }
-

@@ -46,6 +46,7 @@ Built-in plugins handle common configuration formats:
 - Type-safe conversions
 - Clean `.env` output
 - Customizable underscore handling with `--dunder` parameter
+- Flexible filtering with `--include` and `--exclude` glob patterns
 
 ## 🚀 Installation
 
@@ -85,6 +86,11 @@ cat config.db | cfg2env --format sqlite > .env
 # Control underscore handling
 cat config.yaml | cfg2env --dunder 1 > .env  # Remove 1 underscore from consecutive sequences
 cat config.yaml | cfg2env --dunder 3 > .env  # Remove 3 underscores from consecutive sequences
+
+# Filter output keys
+cat config.yaml | cfg2env --include "DATABASE_*,API_*" > .env      # Only DATABASE_* and API_* keys
+cat config.yaml | cfg2env --exclude "*_PASSWORD,*_SECRET" > .env   # Exclude sensitive keys
+cat config.yaml | cfg2env --include "DATABASE_*" --exclude "*_PASSWORD" > .env  # Combine both
 ```
 
 ## 📋 Examples
@@ -182,6 +188,31 @@ EXAMPLEKEY=value
 
 # Input: example____key
 EXAMPLE_KEY=value
+```
+</details>
+
+<details>
+<summary><b>Filtering Examples</b></summary>
+
+```bash
+# Include only DATABASE keys
+cat config.yaml | cfg2env --include "DATABASE_*"
+# Output: DATABASE_HOST, DATABASE_PORT, DATABASE_PASSWORD
+
+# Exclude sensitive keys
+cat config.yaml | cfg2env --exclude "*_PASSWORD,*_SECRET,*_TOKEN"
+# Output: All keys except those ending in _PASSWORD, _SECRET, or _TOKEN
+
+# Combine include and exclude (include first, then exclude)
+cat config.yaml | cfg2env --include "DATABASE_*" --exclude "*_PASSWORD"
+# Output: DATABASE_HOST, DATABASE_PORT (excludes DATABASE_PASSWORD)
+
+# Patterns are case-insensitive and normalized
+cat config.yaml | cfg2env --include "database_*"  # Same as "DATABASE_*"
+
+# No matches produces empty output with comment
+cat config.yaml | cfg2env --include "NONEXISTENT_*"
+# Output: # No keys matched the specified filters
 ```
 </details>
 

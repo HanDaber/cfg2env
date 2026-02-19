@@ -1,0 +1,75 @@
+# Configuration organized by SERVICE first
+# Pattern: SERVICE_ENV_KEY
+# Use case: Extract all config for a specific service across environments
+
+# Database service configuration
+database:
+  dev:
+    host: localhost
+    port: 5432
+    username: dev_user
+    password: dev_pass
+    max_connections: 10
+  staging:
+    host: staging-db.internal
+    port: 5432
+    username: staging_user
+    password: staging_pass_secure
+    max_connections: 50
+  prod:
+    host: prod-db.example.com
+    port: 5432
+    username: prod_user
+    password: prod_pass_very_secure
+    max_connections: 200
+
+# API service configuration
+api:
+  dev:
+    host: localhost
+    port: 8080
+    timeout: 30
+    api_key: dev_api_key_12345
+    secret: dev_secret_67890
+  staging:
+    host: staging-api.internal
+    port: 443
+    timeout: 60
+    api_key: staging_api_key_abc123
+    secret: staging_secret_xyz789
+  prod:
+    host: api.example.com
+    port: 443
+    timeout: 90
+    api_key: prod_api_key_secure_token
+    secret: prod_secret_secure_token
+
+# Cache service configuration
+cache:
+  dev:
+    host: localhost
+    port: 6379
+    ttl: 300
+  staging:
+    host: staging-cache.internal
+    port: 6379
+    ttl: 600
+  prod:
+    host: prod-cache.example.com
+    port: 6379
+    ttl: 3600
+
+# Queue service configuration
+queue:
+  dev:
+    host: localhost
+    port: 5672
+    vhost: dev
+  staging:
+    host: staging-queue.internal
+    port: 5672
+    vhost: staging
+  prod:
+    host: prod-queue.example.com
+    port: 5672
+    vhost: prod

@@ -5,8 +5,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
-	"github.com/handaber/cfg2env/internal/converter"
+	"github.com/handaber/cfg2env/lib/converter"
 	"github.com/handaber/cfg2env/plugins"
 )
 
@@ -21,6 +22,8 @@ var (
 	help    = flag.Bool("help", false, "Show help information")
 	docs    = flag.Bool("docs", false, "Show documentation")
 	dunder  = flag.Int("dunder", 0, "Number of underscores to remove from consecutive sequences (default: 0, negative values treated as 0)")
+	include = flag.String("include", "", "Comma-separated glob patterns for keys to include")
+	exclude = flag.String("exclude", "", "Comma-separated glob patterns for keys to exclude")
 )
 
 func printHelp() {
@@ -37,6 +40,10 @@ OPTIONS:
         Custom SQL query for SQLite (default: "SELECT key, value FROM config")
   -dunder int
         Remove N underscores from consecutive sequences (default: 0)
+  -include string
+        Comma-separated glob patterns for keys to include (e.g., "DATABASE_*,API_*")
+  -exclude string
+        Comma-separated glob patterns for keys to exclude (e.g., "*_PASSWORD,*_SECRET")
   -version
         Show version information
   -help
@@ -62,6 +69,15 @@ EXAMPLES:
 
   # Remove single underscores from consecutive sequences
   cat config.yaml | cfg2env --dunder 1 > .env
+
+  # Filter output to only DATABASE_ keys
+  cat config.yaml | cfg2env --include "DATABASE_*" > .env
+
+  # Exclude sensitive keys
+  cat config.yaml | cfg2env --exclude "*_PASSWORD,*_SECRET,*_TOKEN" > .env
+
+  # Include DATABASE_ keys but exclude passwords
+  cat config.yaml | cfg2env --include "DATABASE_*" --exclude "*_PASSWORD" > .env
 
 OUTPUT:
   Nested keys are flattened with underscores and converted to uppercase:
@@ -110,6 +126,18 @@ func main() {
 	c.SetVersion(version)
 	if *dunder > 0 {
 		c.SetDunder(*dunder)
+	}
+
+	// Configure filtering if patterns provided
+	if *include != "" || *exclude != "" {
+		var includePatterns, excludePatterns []string
+		if *include != "" {
+			includePatterns = strings.Split(*include, ",")
+		}
+		if *exclude != "" {
+			excludePatterns = strings.Split(*exclude, ",")
+		}
+		c.SetFilterPatterns(includePatterns, excludePatterns, converter.GlobMatcher{})
 	}
 
 	// Convert stdin to stdout

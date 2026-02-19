@@ -358,9 +358,9 @@ func TestConverter_DuplicateKeys(t *testing.T) {
 		{
 			name: "multiple case variants",
 			input: map[string]string{
-				"KEY":  "value1",
-				"key":  "value2",
-				"Key":  "value3",
+				"KEY": "value1",
+				"key": "value2",
+				"Key": "value3",
 			},
 			wantErr:       true,
 			wantErrSubstr: "duplicate key 'KEY'",
@@ -501,6 +501,216 @@ func TestConverter_Dunder(t *testing.T) {
 			// Check output
 			if got := out.String(); got != tt.want {
 				t.Errorf("Convert() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestConverterWithFilter(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   map[string]string
+		include []string
+		exclude []string
+		want    []string // expected keys in output
+	}{
+		{
+			name: "include only DATABASE keys",
+			input: map[string]string{
+				"database_host": "localhost",
+				"database_port": "5432",
+				"api_host":      "api.example.com",
+				"cache_host":    "redis.local",
+			},
+			include: []string{"DATABASE_*"},
+			want:    []string{"DATABASE_HOST", "DATABASE_PORT"},
+		},
+		{
+			name: "exclude sensitive keys",
+			input: map[string]string{
+				"database_host":     "localhost",
+				"database_password": "secret",
+				"api_host":          "api.example.com",
+				"api_token":         "token123",
+				"cache_host":        "redis.local",
+			},
+			exclude: []string{"*_PASSWORD", "*_TOKEN"},
+			want:    []string{"API_HOST", "CACHE_HOST", "DATABASE_HOST"},
+		},
+		{
+			name: "include DATABASE, exclude passwords",
+			input: map[string]string{
+				"database_host":     "localhost",
+				"database_password": "secret",
+				"database_port":     "5432",
+				"api_host":          "api.example.com",
+			},
+			include: []string{"DATABASE_*"},
+			exclude: []string{"*_PASSWORD"},
+			want:    []string{"DATABASE_HOST", "DATABASE_PORT"},
+		},
+		{
+			name: "multiple include patterns",
+			input: map[string]string{
+				"database_host": "localhost",
+				"api_host":      "api.example.com",
+				"cache_host":    "redis.local",
+				"log_level":     "info",
+			},
+			include: []string{"DATABASE_*", "API_*"},
+			want:    []string{"API_HOST", "DATABASE_HOST"},
+		},
+		{
+			name: "multiple exclude patterns",
+			input: map[string]string{
+				"database_host":     "localhost",
+				"database_password": "secret",
+				"api_token":         "token123",
+				"api_secret":        "secret456",
+				"cache_host":        "redis.local",
+			},
+			exclude: []string{"*_PASSWORD", "*_TOKEN", "*_SECRET"},
+			want:    []string{"CACHE_HOST", "DATABASE_HOST"},
+		},
+		{
+			name: "pattern normalization - lowercase pattern",
+			input: map[string]string{
+				"DATABASE_HOST": "localhost",
+				"API_HOST":      "api.example.com",
+			},
+			include: []string{"database_*"},
+			want:    []string{"DATABASE_HOST"},
+		},
+		{
+			name: "pattern normalization - mixed case pattern",
+			input: map[string]string{
+				"database_host": "localhost",
+				"api_host":      "api.example.com",
+			},
+			include: []string{"Database_*"},
+			want:    []string{"DATABASE_HOST"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mock plugin
+			p := &mockPlugin{
+				BasePlugin: plugin.NewBasePlugin("mock"),
+				parseFunc: func(r io.Reader) (map[string]string, error) {
+					return tt.input, nil
+				},
+			}
+
+			// Create converter and set filter
+			c := New(p)
+			if len(tt.include) > 0 || len(tt.exclude) > 0 {
+				c.SetFilterPatterns(tt.include, tt.exclude, GlobMatcher{})
+			}
+
+			// Convert
+			var out bytes.Buffer
+			err := c.Convert(strings.NewReader(""), &out)
+			if err != nil {
+				t.Fatalf("Convert() error = %v", err)
+			}
+
+			// Parse output
+			lines := strings.Split(out.String(), "\n")
+			var gotKeys []string
+			for _, line := range lines {
+				if line == "" || strings.HasPrefix(line, "#") {
+					continue
+				}
+				parts := strings.SplitN(line, "=", 2)
+				if len(parts) == 2 {
+					gotKeys = append(gotKeys, parts[0])
+				}
+			}
+
+			// Verify keys match expected
+			if len(gotKeys) != len(tt.want) {
+				t.Errorf("got %d keys, want %d\ngot:  %v\nwant: %v", len(gotKeys), len(tt.want), gotKeys, tt.want)
+				return
+			}
+
+			// Check each expected key is present
+			gotMap := make(map[string]bool)
+			for _, k := range gotKeys {
+				gotMap[k] = true
+			}
+			for _, wantKey := range tt.want {
+				if !gotMap[wantKey] {
+					t.Errorf("missing key %q in output", wantKey)
+				}
+			}
+		})
+	}
+}
+
+func TestConverterWithFilterNoMatches(t *testing.T) {
+	input := map[string]string{
+		"database_host": "localhost",
+		"database_port": "5432",
+		"api_host":      "api.example.com",
+	}
+
+	tests := []struct {
+		name    string
+		include []string
+		exclude []string
+	}{
+		{
+			name:    "include pattern matches nothing",
+			include: []string{"NONEXISTENT_*"},
+		},
+		{
+			name:    "exclude all keys",
+			exclude: []string{"*"},
+		},
+		{
+			name:    "include matches but exclude removes all",
+			include: []string{"DATABASE_*"},
+			exclude: []string{"DATABASE_*"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mock plugin
+			p := &mockPlugin{
+				BasePlugin: plugin.NewBasePlugin("mock"),
+				parseFunc: func(r io.Reader) (map[string]string, error) {
+					return input, nil
+				},
+			}
+
+			// Create converter and set filter
+			c := New(p)
+			c.SetFilterPatterns(tt.include, tt.exclude, GlobMatcher{})
+
+			// Convert
+			var out bytes.Buffer
+			err := c.Convert(strings.NewReader(""), &out)
+			if err != nil {
+				t.Fatalf("Convert() error = %v", err)
+			}
+
+			// Verify output contains header and no-match comment
+			output := out.String()
+			if !strings.Contains(output, "# This file was auto-generated by cfg2env") {
+				t.Error("output missing header")
+			}
+			if !strings.Contains(output, "# No keys matched the specified filters") {
+				t.Error("output missing no-match comment")
+			}
+
+			// Verify no key-value pairs in output
+			lines := strings.Split(output, "\n")
+			for _, line := range lines {
+				if line != "" && !strings.HasPrefix(line, "#") {
+					t.Errorf("unexpected non-comment line in output: %q", line)
+				}
 			}
 		})
 	}

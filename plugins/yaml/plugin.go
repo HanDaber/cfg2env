@@ -3,7 +3,7 @@ package yaml
 import (
 	"io"
 
-	"github.com/handaber/cfg2env/internal/utils"
+	"github.com/handaber/cfg2env/lib/utils"
 	"github.com/handaber/cfg2env/plugin"
 	"gopkg.in/yaml.v3"
 )
