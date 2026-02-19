@@ -1,8 +1,11 @@
 <div align="center">
 
-# cfg2env
+<img src="./logo.png" alt="cfg2env Logo" width="400">
 
-> A plugin-based tool for converting any config format to `.env`
+# cfg2env
+> config to env
+
+## A plugin-based tool for converting any config format to `.env`
 
 [![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://go.dev)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue?style=flat)](LICENSE)
